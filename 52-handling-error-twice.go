@@ -49,6 +49,22 @@ func GetRoute2(srcLat, srcLng, dstLat, dstLng float32) (Route, error) {
 	return getRoute(srcLat, srcLng, dstLat, dstLng)
 }
 
+func GetRoute3(srcLat, srcLng, dstLat, dstLng float32) (Route, error) {
+	err := validateCoordinates2(srcLat, srcLng)
+	if err != nil {
+		return Route{},
+			fmt.Errorf("failed to validate source coordinates: %w", err) // 에러를 포장해서 리턴
+	}
+
+	err = validateCoordinates2(dstLat, dstLng)
+	if err != nil {
+		return Route{},
+			fmt.Errorf("failed to validate target coordinates: %w", err)
+	}
+
+	return getRoute(srcLat, srcLng, dstLat, dstLng)
+}
+
 func validateCoordinates2(lat, lng float32) error {
 	if lat > 90.0 || lat < -90.0 {
 		return fmt.Errorf("invalid latitude: %f", lat)
