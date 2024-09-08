@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -23,16 +24,16 @@ type transientError struct {
 func handler(w http.ResponseWriter, r *http.Request) {
 	transactionID := r.URL.Query().Get("transaction") // 트랜잭션 ID를 추출
 
-	amount, err := getTransactionAmount(transactionID) 	  // 모든 로직이 담긴 getTransactionAmount 함수 호출
+	amount, err := getTransactionAmount(transactionID) // 모든 로직이 담긴 getTransactionAmount 함수 호출
 	if err != nil {
-		switch err := err.(type) {
-		case transientError:							  // 에러 타입 검사
+		if errors.As(err, &transientError{}) { // transientError에 포인터를 전달하는 방식으로 errors.As를 호출
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		default:
+		} else {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 		return
 	}
+}
 
 func (t transientError) Error() string {
 	return fmt.Sprintf("transient error: %v", t.err)
@@ -56,3 +57,6 @@ func getTransactionAmount(transactionID string) (float32, error) {
 func getTransactionAmountFromDB1(id string) (float32, error) {
 	return 0, transientError{err: err} // transientError를 리턴
 }
+
+// getTransactionAmount는 포장한 에러를 리턴하도록 변경하기 때문에 transientError 케이스는 항상 false가 됨
+// 이러한 이유때문에 에러를 포장하는 디렉티브가 추가됐고, errors.As로 포장된 에러의 타입을 확인하는 기능 추가
