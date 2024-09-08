@@ -44,10 +44,15 @@ func getTransactionAmount(transactionID string) (float32, error) {
 		return 0, transientError{fmt.Errorf("invalid transaction ID: %s", transactionID)}
 	}
 
-	amount, err := getTransactionAmount(transactionID)
+	amount, err := getTransactionAmountFromDB1(transactionID)
 	// DB 조회에 실패하면 transientError를 리턴
 	if err != nil {
-		return 0, transientError{err: err}
+		return 0, fmt.Errorf("failed to get transaction: %s: %w", transactionID, err) // %w를 사용해 원본 에러를 포장
 	}
 	return amount, nil
+}
+
+// 발생한 에러 종류와 상관없이 항상 400만 리턴, transientError 부분은 전혀 실행되지 않음
+func getTransactionAmountFromDB1(id string) (float32, error) {
+	return 0, transientError{err: err} // transientError를 리턴
 }
