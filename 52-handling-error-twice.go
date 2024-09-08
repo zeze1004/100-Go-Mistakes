@@ -35,6 +35,30 @@ func validateCoordinates1(lat, lng float32) error {
 	return nil
 }
 
+func GetRoute2(srcLat, srcLng, dstLat, dstLng float32) (Route, error) {
+	err := validateCoordinates2(srcLat, srcLng)
+	if err != nil {
+		return Route{}, err // 에러를 리턴하기만 함
+	}
+
+	err = validateCoordinates2(dstLat, dstLng)
+	if err != nil {
+		return Route{}, err // 에러를 리턴하기만 함
+	}
+
+	return getRoute(srcLat, srcLng, dstLat, dstLng)
+}
+
+func validateCoordinates2(lat, lng float32) error {
+	if lat > 90.0 || lat < -90.0 {
+		return fmt.Errorf("invalid latitude: %f", lat)
+	}
+	if lng > 180.0 || lng < -180.0 {
+		return fmt.Errorf("invalid longitude: %f", lng)
+	}
+	return nil
+}
+
 func getRoute(lat, lng, lat2, lng2 float32) (Route, error) {
 	return Route{}, nil
 }
