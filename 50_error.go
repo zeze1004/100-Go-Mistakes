@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 // 에러 타입을 정확하게 검사하라
 
@@ -15,6 +18,21 @@ import "fmt"
 type transientError struct {
 	err error
 }
+
+// 주어진 에러 타입에 적합한 HTTP 상태 코드를 리턴하는 HTTP 핸들러를 작성해보자
+func handler(w http.ResponseWriter, r *http.Request) {
+	transactionID := r.URL.Query().Get("transaction") // 트랜잭션 ID를 추출
+
+	amount, err := getTransactionAmount(transactionID) 	  // 모든 로직이 담긴 getTransactionAmount 함수 호출
+	if err != nil {
+		switch err := err.(type) {
+		case transientError:							  // 에러 타입 검사
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		default:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
 
 func (t transientError) Error() string {
 	return fmt.Sprintf("transient error: %v", t.err)
