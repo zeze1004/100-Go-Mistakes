@@ -25,17 +25,33 @@ func main() {
 	// # 예제2: 길이가 1인 슬라이스 대신, 용량은 1이고 길이는 0인 슬라이스
 	slice2 := make([]int, 0, 1)
 
-	go func() {
-		s3 := append(slice2, 1)
-		fmt.Println(s3)
-	}()
-
-	go func() {
-		s4 := append(slice2, 1)
-		fmt.Println(s4)
-	}()
+	//go func() {
+	//	s3 := append(slice2, 1)
+	//	fmt.Println(s3)
+	//}()
+	//
+	//go func() {
+	//	s4 := append(slice2, 1)
+	//	fmt.Println(s4)
+	//}()
 
 	// 위 코드에서는 데이터 경쟁이 발생할 수 있음
 	// 슬라이스의 길이가 0이므로, 두 고루틴이 슬라이스에 원소를 추가할 때마다 내부 배열의 동일한 지점을 업데이트하려고 하기에 경쟁 상태가 발생
 	// 경쟁이 발생하지 않게 하려면 어떻게 해야할까? => slice의 복제본을 만들면 됨
+
+	go func() {
+		sCopy := make([]int, len(slice2), cap(slice2))
+		copy(sCopy, slice2) // 슬라이스 복제
+
+		s3 := append(sCopy, 1) // 복제한 슬라이스에 원소 추가
+		fmt.Println(s3)
+	}()
+
+	go func() {
+		sCopy := make([]int, len(slice2), cap(slice2))
+		copy(sCopy, slice2)
+
+		s4 := append(sCopy, 1)
+		fmt.Println(s4)
+	}()
 }
