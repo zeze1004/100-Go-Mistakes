@@ -13,7 +13,7 @@ func main() {
 	c.AddBalance("1", 1.0)
 	c.AddBalance("2", 3.0)
 	c.AddBalance("3", 2.0)
-	fmt.Println(c.AverageBalance())
+	fmt.Println(c.AverageBalance1())
 }
 
 // 고객의 잔액을 캐시에 저장하기 위한 Cache 구조체
@@ -31,7 +31,7 @@ func (c *Cache) AddBalance(id string, balance float64) {
 
 // 모든 고객의 평균 잔액을 계산
 // 함수가 끝날 때 락이 풀려서, 함수전체가 크리티커컬 섹션
-func (c *Cache) AverageBalance() float64 {
+func (c *Cache) AverageBalance1() float64 {
 	c.mu.RLock()         // 잔액을 읽을 때는 읽기 뮤텍스를 잠그고
 	defer c.mu.RUnlock() // 함수가 끝나면 뮤텍스를 해제: 함수 전체를 보호
 
@@ -40,4 +40,21 @@ func (c *Cache) AverageBalance() float64 {
 		sum += balance
 	}
 	return sum / float64(len(c.balances))
+}
+
+func (c *Cache) AverageBalance2() float64 {
+	c.mu.RLock()
+	m := make(map[string]float64, len(c.balances)) // 맵 복제
+
+	for k, v := range c.balances {
+		m[k] = v
+	}
+	c.mu.RUnlock()
+
+	sum := 0.
+	// 반복연산은 크리티컬 섹션 밖에서 본제본에 대해 수행
+	for _, balance := range m {
+		sum += balance
+	}
+	return sum / float64(len(m))
 }
