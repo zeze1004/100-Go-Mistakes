@@ -1,0 +1,45 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+// 슬라이스와 맵에 뮤텍스를 잘 적용하라
+func main() {
+	c := Cache{
+		balances: make(map[string]float64),
+	}
+	c.AddBalance("1", 1.0)
+	c.AddBalance("2", 3.0)
+	c.AddBalance("3", 2.0)
+	fmt.Println(c.AverageBalance())
+}
+
+// 고객의 잔액을 캐시에 저장하기 위한 Cache 구조체
+type Cache struct {
+	mu       sync.RWMutex       // RWMutex: 쓰려는 고루틴이 없으면 여러 고루틴이 동시에 읽을 수 있음
+	balances map[string]float64 // 고객 ID를 키로 하는 잔액을 저장하는 맵
+}
+
+// 잔액을 캐시에 저장하는 함수
+func (c *Cache) AddBalance(id string, balance float64) {
+	c.mu.Lock()              // 잔액을 추가할 때는 뮤텍스를 잠그고
+	c.balances[id] = balance // 함수명이 Add면 +=가 맞지 않나? 이럴거면 SetBalance가 맞는 듯?
+	c.mu.Unlock()            // 잔액 추가가 끝나면 뮤텍스를 해제
+}
+
+// 모든 고객의 평균 잔액을 계산
+// 크리티컬 섹션?
+func (c *Cache) AverageBalance() float64 {
+	c.mu.RLock()           // 잔액을 읽을 때는 읽기 뮤텍스를 잠그고
+	balances := c.balances // 크리티컬 섹션에서 잔액 맵을 복사
+	c.mu.RUnlock()         // 잔액을 읽은 후 뮤텍스를 해제
+
+	// 크리티컬 섹션 밖
+	sum := 0.
+	for _, balance := range balances {
+		sum += balance
+	}
+	return sum / float64(len(c.balances))
+}
