@@ -30,15 +30,13 @@ func (c *Cache) AddBalance(id string, balance float64) {
 }
 
 // 모든 고객의 평균 잔액을 계산
-// 크리티컬 섹션?
+// 함수가 끝날 때 락이 풀려서, 함수전체가 크리티커컬 섹션
 func (c *Cache) AverageBalance() float64 {
-	c.mu.RLock()           // 잔액을 읽을 때는 읽기 뮤텍스를 잠그고
-	balances := c.balances // 크리티컬 섹션에서 잔액 맵을 복사
-	c.mu.RUnlock()         // 잔액을 읽은 후 뮤텍스를 해제
+	c.mu.RLock()         // 잔액을 읽을 때는 읽기 뮤텍스를 잠그고
+	defer c.mu.RUnlock() // 함수가 끝나면 뮤텍스를 해제: 함수 전체를 보호
 
-	// 크리티컬 섹션 밖
 	sum := 0.
-	for _, balance := range balances {
+	for _, balance := range c.balances {
 		sum += balance
 	}
 	return sum / float64(len(c.balances))
